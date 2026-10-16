@@ -1,0 +1,101 @@
+🟢 1. เปิด Terminal ใน VS Code
+คลิกเมนู Terminal → New Terminal
+🟢 2. ตรวจสอบ Node.js
+พิมพ์คำสั่งนี้ แล้วกด Enter
+node -v
+
+จากนั้นตรวจสอบ npm
+npm -v
+
+ถ้าทั้งสองคำสั่งแสดงเวอร์ชัน แสดงว่าพร้อมไปขั้นตอนต่อไป
+🟢 3. ติดตั้ง Cypress
+เปิดโฟลเดอร์โปรเจกต์ที่ต้องการใช้ Cypress ใน VS Code แล้วพิมพ์
+npm init -y
+
+จากนั้นติดตั้ง Cypress
+npm install cypress --save-dev
+
+รอจนติดตั้งเสร็จ
+🟢 4. เปิด Cypress
+พิมพ์คำสั่งนี้
+npx cypress open
+
+จะมีหน้าต่าง Cypress เปิดขึ้นมา ให้เลือก
+1. E2E Testing
+2. เลือก Browser เช่น Chrome
+3. คลิก Start E2E Testing
+4. ถ้า Cypress เสนอให้สร้างไฟล์ตั้งค่า ให้กดยืนยันสร้างไฟล์ที่จำเป็น
+🟢 5. สร้างไฟล์ Test
+โดยทั่วไปไฟล์ Cypress จะอยู่ในโฟลเดอร์นี้
+cypress/
+└── e2e/
+    └── login.cy.js
+
+สร้างไฟล์ login.cy.js แล้วใส่โค้ดนี้ได้เลย
+// จัดกลุ่ม Test Case สำหรับ Login
+describe('Login Test', () => {
+
+    // เปิดเว็บไซต์ก่อนเริ่มแต่ละ Test Case
+    beforeEach(() => {
+        cy.visit('https://www.saucedemo.com/');
+    });
+
+    // TC01: Login สำเร็จ
+    it('TC01 - Login successfully', () => {
+
+        // กรอก Username
+        cy.get('#user-name').type('standard_user');
+
+        // กรอก Password
+        cy.get('#password').type('secret_sauce');
+
+        // คลิกปุ่ม Login
+        cy.get('#login-button').click();
+
+        // ตรวจสอบว่า URL เปลี่ยนไปหน้าสินค้า
+        cy.url().should('include', '/inventory.html');
+
+        // ตรวจสอบว่าหัวข้อหน้าเว็บเป็น Products
+        cy.get('.title').should('have.text', 'Products');
+    });
+
+    // TC02: ไม่กรอก Username
+    it('TC02 - Empty username', () => {
+
+        // กรอกเฉพาะ Password
+        cy.get('#password').type('secret_sauce');
+
+        // คลิกปุ่ม Login
+        cy.get('#login-button').click();
+
+        // ตรวจสอบข้อความแจ้งเตือน
+        cy.get('[data-test="error"]')
+            .should('be.visible')
+            .and('contain.text', 'Username is required');
+    });
+
+});
+
+🟢 6. รัน Test
+ถ้าเปิดหน้าต่าง Cypress แล้ว ให้เลือกไฟล์ login.cy.js เพื่อเริ่มทดสอบ
+หรือถ้าต้องการรันผ่าน Terminal โดยตรง ใช้คำสั่ง
+npx cypress run
+
+คำสั่งนี้จะรัน Test โดยไม่เปิดหน้าต่าง Cypress แบบ Interactive
+🧠 สรุปคำสั่ง cy. ที่ควรจำก่อนสอบ
+คำสั่ง	ความหมาย
+cy.visit()	เปิดเว็บไซต์
+cy.get()	ค้นหา Element
+.type()	พิมพ์ข้อความ
+.click()	คลิก
+.clear()	ลบข้อความในช่อง
+.check()	เลือก Checkbox
+.uncheck()	ยกเลิก Checkbox
+.select()	เลือกตัวเลือกใน Dropdown
+cy.url()	อ่าน URL ปัจจุบัน
+cy.contains()	ค้นหา Element จากข้อความ
+.should()	ตรวจสอบผลลัพธ์
+.and()	เพิ่มเงื่อนไขตรวจสอบ
+.first()	เลือก Element ตัวแรก
+.eq(1)	เลือก Element ลำดับที่ 2
+.each()	วนทำงานกับ Element หลายตัว
