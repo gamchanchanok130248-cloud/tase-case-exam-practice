@@ -1,0 +1,180 @@
+// นำ test และ expect มาจาก Playwright Test
+// test ใช้สร้าง Test Case ส่วน expect ใช้ตรวจสอบผลลัพธ์
+const { test, expect } = require('@playwright/test');
+
+// จัดกลุ่ม Test Case ที่เกี่ยวข้องกับ Login
+test.describe('Login Test', () => {
+
+    // ทำงานก่อนเริ่ม Test Case ทุกกรณี
+    test.beforeEach(async ({ page }) => {
+
+        // เปิดเว็บไซต์ SauceDemo
+        await page.goto('https://www.saucedemo.com/');
+
+    });
+
+    // TC01: Login สำเร็จ
+    test('TC01 - Login successfully', async ({ page }) => {
+
+        // ค้นหาช่อง Username แล้วกรอกข้อมูล
+        await page.locator('#user-name').fill('standard_user');
+
+        // ค้นหาช่อง Password แล้วกรอกข้อมูล
+        await page.locator('#password').fill('secret_sauce');
+
+        // คลิกปุ่ม Login
+        await page.locator('#login-button').click();
+
+        // ตรวจสอบว่า URL มี inventory.html
+        await expect(page).toHaveURL(/inventory\.html/);
+
+        // ตรวจสอบว่าหัวข้อ Products ปรากฏบนหน้าเว็บ
+        await expect(page.locator('.title')).toHaveText('Products');
+
+    });
+
+    // TC02: Login โดยไม่กรอก Username
+    test('TC02 - Empty username', async ({ page }) => {
+
+        // กรอกเฉพาะ Password
+        await page.locator('#password').fill('secret_sauce');
+
+        // คลิกปุ่ม Login
+        await page.locator('#login-button').click();
+
+        // ตรวจสอบข้อความแจ้งเตือน Username is required
+        await expect(page.locator('[data-test="error"]'))
+            .toContainText('Username is required');
+
+    });
+
+    // TC03: Login โดยกรอก Password ผิด
+    test('TC03 - Invalid password', async ({ page }) => {
+
+        // กรอก Username ที่ถูกต้อง
+        await page.locator('#user-name').fill('standard_user');
+
+        // กรอก Password ที่ไม่ถูกต้อง
+        await page.locator('#password').fill('wrong_password');
+
+        // คลิกปุ่ม Login
+        await page.locator('#login-button').click();
+
+        // ตรวจสอบว่ามีข้อความแจ้งเตือน
+        await expect(page.locator('[data-test="error"]')).toBeVisible();
+
+    });
+
+    // TC04: Login โดยไม่กรอกข้อมูลทั้งสองช่อง
+    test('TC04 - Empty username and password', async ({ page }) => {
+
+        // ไม่กรอก Username และ Password
+        // คลิกปุ่ม Login ทันที
+        await page.locator('#login-button').click();
+
+        // ตรวจสอบว่าระบบแจ้งให้กรอก Username
+        await expect(page.locator('[data-test="error"]'))
+            .toContainText('Username is required');
+
+    });
+
+});
+
+
+
+
+
+----------------------------------------------------------------------
+
+  *** Settings ***
+# ใช้ Browser Library สำหรับควบคุมเว็บเบราว์เซอร์
+# Library นี้ทำงานร่วมกับ Playwright
+Library    Browser
+
+# เปิดเว็บไซต์ก่อนเริ่ม Test Case แต่ละกรณี
+Test Setup    Open Login Page
+
+# ปิด Browser หลังจบ Test Case แต่ละกรณี
+Test Teardown    Close Browser
+
+
+*** Variables ***
+# กำหนด URL ของเว็บไซต์ที่ใช้ทดสอบ
+${URL}    https://www.saucedemo.com/
+
+# กำหนด Username สำหรับ Login
+${USERNAME}    standard_user
+
+# กำหนด Password สำหรับ Login
+${PASSWORD}    secret_sauce
+
+
+*** Test Cases ***
+# TC01: ทดสอบ Login สำเร็จ
+TC01 - Login Successfully
+    # กรอก Username
+    Fill Text    id=user-name    ${USERNAME}
+
+    # กรอก Password
+    Fill Text    id=password    ${PASSWORD}
+
+    # คลิกปุ่ม Login
+    Click    id=login-button
+
+    # ตรวจสอบว่าหัวข้อ Products แสดงอยู่
+    Get Text    css=.title    ==    Products
+
+    # ตรวจสอบว่า URL ปัจจุบันมี inventory.html
+    Get Url    contains    inventory.html
+
+
+# TC02: ทดสอบ Login โดยไม่กรอก Username
+TC02 - Empty Username
+    # กรอกเฉพาะ Password
+    Fill Text    id=password    ${PASSWORD}
+
+    # คลิกปุ่ม Login
+    Click    id=login-button
+
+    # ตรวจสอบข้อความแจ้งเตือน
+    Get Text    css=[data-test="error"]    contains    Username is required
+
+
+# TC03: ทดสอบ Login โดยกรอก Password ผิด
+TC03 - Invalid Password
+    # กรอก Username ที่ถูกต้อง
+    Fill Text    id=user-name    ${USERNAME}
+
+    # กรอก Password ที่ไม่ถูกต้อง
+    Fill Text    id=password    wrong_password
+
+    # คลิกปุ่ม Login
+    Click    id=login-button
+
+    # ตรวจสอบว่าข้อความแจ้งเตือนปรากฏ
+    Get Element States    css=[data-test="error"]    contains    visible
+
+
+# TC04: ทดสอบ Login โดยไม่กรอกข้อมูลทั้งสองช่อง
+TC04 - Empty Username And Password
+    # ไม่กรอกข้อมูลใด ๆ แล้วคลิก Login
+    Click    id=login-button
+
+    # ตรวจสอบว่าระบบแจ้งให้กรอก Username
+    Get Text    css=[data-test="error"]    contains    Username is required
+
+
+*** Keywords ***
+# สร้าง Keyword สำหรับเปิด Browser และเข้าสู่หน้า Login
+Open Login Page
+    # เปิด Browser แบบ Chromium
+    New Browser    chromium    headless=${TRUE}
+
+    # สร้างหน้าเว็บใหม่
+    New Page    ${URL}
+
+
+# สร้าง Keyword สำหรับปิด Browser
+Close Browser
+    # ปิด Browser หลังจบ Test Case
+    Browser.Close Browser
